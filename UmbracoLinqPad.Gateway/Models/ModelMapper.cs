@@ -26,5 +26,25 @@ namespace UmbracoLinqPad.Gateway.Models
 
             return instance;
         }
+
+        public static T FromIMedia<T>(Type genType, IMedia content)
+            where T : IGeneratedContentBase
+        {
+            var instance = (T)Activator.CreateInstance(genType);
+            instance.ContentTypeAlias = content.ContentType.Alias;
+            instance.Name = content.Name;
+
+            var contentTypeProps = genType.GetProperties().Where(x => x.Name != "ContentTypeAlias" && x.Name != "Name");
+            foreach (var contentTypeProp in contentTypeProps)
+            {
+                if (content.Properties.Contains(contentTypeProp.Name))
+                {
+                    var prop = content.Properties[contentTypeProp.Name];
+                    contentTypeProp.SetValue(instance, prop.Value, null);
+                }
+            }
+
+            return instance;
+        }
     }
 }

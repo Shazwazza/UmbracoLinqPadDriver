@@ -7,8 +7,6 @@ using UmbracoLinqPad.Compilers;
 
 namespace UmbracoLinqPad.Gateway.Compilers
 {
-    
-
     public class DataContextCompiler : IDataContextCompiler
     {
 
@@ -29,41 +27,51 @@ namespace UmbracoLinqPad.Gateway.Compilers
             sb.Append(className);
             sb.AppendLine("(DirectoryInfo umbracoFolder) : base(umbracoFolder) { }");
 
-            foreach (var alias in appContext.Services.ContentTypeService.GetAllContentTypes().Select(x => x.Alias))
+            foreach (var alias in appContext.Services.ContentTypeService.GetAllContentTypes().Select(x => x.Alias).Distinct())
             {
-                sb.Append("public IEnumerable<");
-                sb.Append(alias); //enumerable type
-                sb.Append("> ");
-                sb.AppendLine(alias); //property name
-                sb.AppendLine(" { "); //start property
-                sb.Append(" get { "); //start get
-                sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentCollection<");
-                sb.Append(alias);
-                sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
-                sb.Append(alias);
-                sb.Append("\"); ");
-                sb.AppendLine("}"); //end get
-                sb.AppendLine("}"); //end property
+                GenerateProperty(alias, "Content", "UmbracoLinqPad.Gateway.Models.ContentCollection", sb);
+            }
 
-                //TODO: When we have the ability to query content nicely from the core and implement IQueryable, then we'd enable that here
-
-                //sb.Append("public IQueryable<");
-                //sb.Append(alias); //enumerable type
-                //sb.Append("> ");
-                //sb.AppendLine(alias); //property name
-                //sb.AppendLine(" { "); //start property
-                //sb.Append(" get { "); //start get
-                //sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentQuery<");
-                //sb.Append(alias);
-                //sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
-                //sb.Append(alias);
-                //sb.Append("\"); ");
-                //sb.AppendLine("}"); //end get
-                //sb.AppendLine("}"); //end property
+            foreach (var alias in appContext.Services.ContentTypeService.GetAllMediaTypes().Select(x => x.Alias).Distinct())
+            {
+                GenerateProperty(alias, "Media", "UmbracoLinqPad.Gateway.Models.MediaCollection", sb);
             }
 
             sb.AppendLine("}"); //end class
             return sb.ToString();
+        }
+
+        private void GenerateProperty(string alias, string category, string collectionType, StringBuilder sb)
+        {
+            sb.Append("public IEnumerable<");
+            sb.Append(alias); //enumerable type
+            sb.Append("> ");
+            sb.AppendFormat("{0}_{1}", category, alias); //property name prefixed with category (i.e. Content)
+            sb.AppendLine(" { "); //start property
+            sb.Append(" get { "); //start get
+            sb.AppendFormat(" return new {0}<", collectionType);
+            sb.Append(alias);
+            sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
+            sb.Append(alias);
+            sb.Append("\"); ");
+            sb.AppendLine("}"); //end get
+            sb.AppendLine("}"); //end property
+
+            //TODO: When we have the ability to query content nicely from the core and implement IQueryable, then we'd enable that here
+
+            //sb.Append("public IQueryable<");
+            //sb.Append(alias); //enumerable type
+            //sb.Append("> ");
+            //sb.AppendLine(alias); //property name
+            //sb.AppendLine(" { "); //start property
+            //sb.Append(" get { "); //start get
+            //sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentQuery<");
+            //sb.Append(alias);
+            //sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
+            //sb.Append(alias);
+            //sb.Append("\"); ");
+            //sb.AppendLine("}"); //end get
+            //sb.AppendLine("}"); //end property
         }
     }
 }

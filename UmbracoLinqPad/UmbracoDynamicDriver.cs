@@ -42,7 +42,7 @@ namespace UmbracoLinqPad
             var dsContext = (UmbracoDataContextBase)context;
             dsContext.CommandExecuted += (sender, s) => executionManager.SqlTranslationWriter.WriteLine(s);
         }
-      
+
         public override ParameterDescriptor[] GetContextConstructorParameters(IConnectionInfo cxInfo)
         {
             return new[]
@@ -60,7 +60,7 @@ namespace UmbracoLinqPad
         }
 
         public override IEnumerable<string> GetAssembliesToAdd(IConnectionInfo cxInfo)
-        {           
+        {
             var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
 
             return Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll")
@@ -106,7 +106,7 @@ namespace UmbracoLinqPad
         public override DbProviderFactory GetProviderFactory(IConnectionInfo cxInfo)
         {
             //LINQPad lets users run old-fashioned SQL queries, by setting the query language to “SQL”. If it makes for your driver to support this, you can gain more control over how connections are created by overriding the following methods:
-            
+
             //Override this to let users run raw SQL against umbraco
 
             return base.GetProviderFactory(cxInfo);
@@ -124,7 +124,7 @@ namespace UmbracoLinqPad
         public override void ExecuteESqlQuery(IConnectionInfo cxInfo, string query)
         {
             throw new Exception("ESQL queries are not supported for this type of connection");
-        }      
+        }
 
         public override List<ExplorerItem> GetSchemaAndBuildAssembly(IConnectionInfo cxInfo, AssemblyName assemblyToBuild, ref string nameSpace, ref string typeName)
         {
@@ -136,7 +136,7 @@ namespace UmbracoLinqPad
 
             //load all assemblies in the umbraco bin folder
             var loadedAssemblies = Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll").Select(LoadAssemblySafely).ToList();
-            
+
             //we'll need to manually resolve any assemblies loaded above
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
             {
@@ -165,7 +165,7 @@ namespace UmbracoLinqPad
                         gatewayLoader.GatewayAssembly.GetType("UmbracoLinqPad.Gateway.Compilers.DataContextCompiler"));
 
                     var sb = new StringBuilder();
-                    
+
                     //create the content type classes
                     foreach (var compiled in contentItemsCompiler.GenerateClasses(appCtx.RealUmbracoApplicationContext))
                     {
@@ -181,19 +181,19 @@ namespace UmbracoLinqPad
 
                     var properties = dataContextType.GetProperties()
                         //Get all properties of enumerable IGeneratedContentBase
-                        .Where(x => typeof(IEnumerable<Models.IGeneratedContentBase>).IsAssignableFrom(x.PropertyType));
-                    
-                    return new List<ExplorerItem>
-                    {
-                        new ExplorerItem("Content", ExplorerItemKind.Category, ExplorerIcon.Table)
+                        .Where(x => typeof(IEnumerable<Models.IGeneratedContentBase>).IsAssignableFrom(x.PropertyType))
+                        .GroupBy(x => x.Name.Split('_')[0]); //group on 'category' property name
+
+                    return properties.Select(category =>
+                        new ExplorerItem(category.Key, ExplorerItemKind.Category, ExplorerIcon.Table)
                         {
-                            Children = properties
+                            Children = category
                                 .Select(x => new ExplorerItem(x.Name, ExplorerItemKind.QueryableObject, ExplorerIcon.View)
                                 {
                                     IsEnumerable = true
-                                }).ToList()                            
-                        }
-                    };
+                                }).ToList()
+                        }).ToList();
+
                 }
             }
         }

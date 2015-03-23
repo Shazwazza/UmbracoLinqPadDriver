@@ -21,6 +21,7 @@ namespace UmbracoLinqPad.Gateway.Compilers
                 var sb = new StringBuilder();
 
                 sb.Append("public class ");
+                //TODO: The class needs to be prefixed with "Content_" or "Media_" like we have for the DataContext properties.
                 sb.Append(contentType.Alias);
                 sb.AppendLine(" : UmbracoLinqPad.Models.IGeneratedContentBase"); //implements
                 sb.AppendLine(" {"); //open class

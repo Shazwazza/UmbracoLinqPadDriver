@@ -25,15 +25,11 @@ namespace UmbracoLinqPad.Gateway
         {           
             _application = new ConsoleApplication(umbracoFolder);
             _application.StartApplication();
-
-            //var appContext = realUmbracoApplicationContext as ApplicationContext;
-            //if (appContext == null) throw new ArgumentException("realUmbracoApplicationContext is not of type " + typeof(ApplicationContext));
-            //ApplicationContext = appContext;
-
             ApplicationContext = ApplicationContext.Current;
         }
 
         public ApplicationContext ApplicationContext { get; private set; }
+
 
         public override void Dispose()
         {
