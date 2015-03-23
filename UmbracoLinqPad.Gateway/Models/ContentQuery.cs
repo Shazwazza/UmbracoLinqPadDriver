@@ -10,17 +10,19 @@ using UmbracoLinqPad.Models;
 
 namespace UmbracoLinqPad.Gateway.Models
 {
-    public class ContentQuery<T> : IQueryable<T>
+    public class ContentQuery<T> : IOrderedQueryable<T>
         where T : IGeneratedContentBase
     {
         private readonly Assembly _generatedAssembly;
         private readonly UmbracoDataContext _dataContext;
         private readonly string _contentTypeAlias;
         private readonly IContentType _contentType;
-        private readonly IQueryable<T> _baseQueryable;
+        private readonly IOrderedQueryable<T> _baseQueryable;
 
         public ContentQuery(UmbracoDataContext dataContext, string contentTypeAlias)
         {
+            System.Diagnostics.Debugger.Launch();
+
             if (dataContext == null) throw new ArgumentNullException("dataContext");
 
             //NOTE: This is strange i know but linqpad subclasses our data context in it's own assembly, we need
@@ -35,9 +37,16 @@ namespace UmbracoLinqPad.Gateway.Models
             _baseQueryable = new DelegateQueryable<T>(DataQuery);
         }
 
-        private IEnumerable<T> DataQuery(QueryInfo info)
+        public IEnumerable<T> DataQuery(QueryInfo info)
         {
-            
+            System.Diagnostics.Debugger.Launch();
+
+            _dataContext.ExecutedCommand("QueryInfo: " +
+                "OrderBy: " +
+                info.OrderBy +
+                ", Take: " + (info.Take.HasValue ? info.Take.Value.ToString() : "null") +
+                ", Skip: " + info.Skip +
+                string.Join("\r\n", info.Clauses));
 
             var content = _dataContext.ApplicationContext.Services.ContentService.GetContentOfContentType(_contentType.Id);
 
@@ -47,9 +56,6 @@ namespace UmbracoLinqPad.Gateway.Models
                 throw new InvalidOperationException("No generated type found: " + "Umbraco.Generated." + _contentTypeAlias +
                                                     " data context assembly: " + _generatedAssembly);
             return content.Select(x => FromIContent(genType, x));
-
-            //DataQuery<T> dataQuery = queryInfo => GetProducts(queryInfo.Take / queryInfo.Skip, queryInfo.Skip);
-            ////notice that we have mapped Skip and Take into paging parameters
         }
 
         private T FromIContent(Type genType, IContent content)
@@ -78,22 +84,23 @@ namespace UmbracoLinqPad.Gateway.Models
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return GetEnumerator();
+            return _baseQueryable.GetEnumerator();
         }
 
         public Expression Expression
         {
             get { return _baseQueryable.Expression; }
         }
-        
+
         public Type ElementType
         {
             get { return _baseQueryable.ElementType; }
         }
-        
+
         public IQueryProvider Provider
         {
             get { return _baseQueryable.Provider; }
         }
+
     }
 }

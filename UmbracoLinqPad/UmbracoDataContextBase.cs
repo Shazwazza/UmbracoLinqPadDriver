@@ -16,6 +16,19 @@ namespace UmbracoLinqPad
         }
 
         public abstract void Dispose();
+
+        public void ExecutedCommand(string command)
+        {
+            OnCommandExecuted(command);
+        }
+
+        internal event EventHandler<string> CommandExecuted;
+
+        private void OnCommandExecuted(string e)
+        {
+            var handler = CommandExecuted;
+            if (handler != null) handler(this, e);
+        }
     }
 
 }

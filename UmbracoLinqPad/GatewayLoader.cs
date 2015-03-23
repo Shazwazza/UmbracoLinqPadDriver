@@ -15,14 +15,16 @@ namespace UmbracoLinqPad
     public sealed class GatewayLoader
     {
 
-        public GatewayLoader(Assembly gatewayAssembly, Assembly umbracoCoreAssembly)
+        public GatewayLoader(Assembly gatewayAssembly, Assembly umbracoCoreAssembly, Assembly iqToolkitAssembly)
         {
             GatewayAssembly = gatewayAssembly;
             UmbracoCoreAssembly = umbracoCoreAssembly;
+            IqToolkitAssembly = iqToolkitAssembly;
             _consoleAppType= new Lazy<Type>(() => GatewayAssembly.GetType("UmbracoLinqPad.Gateway.Bootstrap.ConsoleApplication"));
         }
 
         public Assembly UmbracoCoreAssembly { get; private set; }
+        public Assembly IqToolkitAssembly { get; private set; }
         public Assembly GatewayAssembly { get; private set; }
 
         private readonly Lazy<Type> _consoleAppType;

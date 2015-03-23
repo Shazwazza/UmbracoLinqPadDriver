@@ -31,7 +31,7 @@ namespace UmbracoLinqPad.Gateway.Compilers
 
             foreach (var alias in appContext.Services.ContentTypeService.GetAllContentTypes().Select(x => x.Alias))
             {
-                sb.Append("public IEnumerable<");
+                sb.Append("public IQueryable<");
                 sb.Append(alias); //enumerable type
                 sb.Append("> ");
                 sb.AppendLine(alias); //property name

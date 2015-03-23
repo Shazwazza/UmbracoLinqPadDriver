@@ -38,12 +38,9 @@ namespace UmbracoLinqPad
 
         public override void InitializeContext(IConnectionInfo cxInfo, object context, QueryExecutionManager executionManager)
         {
-            //Here we can manually write to the SQL translations output if we wanted, example:
-
-            //var dsContext = (DataServiceContext)context;
-            //dsContext.SendingRequest += (sender, e) =>
-            //  executionManager.SqlTranslationWriter.WriteLine(e.Request.RequestUri);
-
+            //This is used to write output to the 'SQL' window
+            var dsContext = (UmbracoDataContextBase)context;
+            dsContext.CommandExecuted += (sender, s) => executionManager.SqlTranslationWriter.WriteLine(s);
         }
       
         public override ParameterDescriptor[] GetContextConstructorParameters(IConnectionInfo cxInfo)
@@ -63,25 +60,13 @@ namespace UmbracoLinqPad
         }
 
         public override IEnumerable<string> GetAssembliesToAdd(IConnectionInfo cxInfo)
-        {
-            ////we'll need to manually resolve any assemblies loaded above
-            //AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            //{
-            //    //This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
-            //    if (args.Name != "App_Code") return null;
-            //    return FakeAssembly(Path.Combine(GetDriverFolder(), args.Name + ".dll")).CompiledAssembly;
-            //};
-
-            ////This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
-            //var appCode = FakeAssembly(Path.Combine(GetDriverFolder(), "App_Code.dll")).CompiledAssembly;
-
+        {           
             var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
 
             return Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll")
                 .Concat(new[]
                 {
-                    "UmbracoLinqPad.Gateway.dll",
-                    //appCode.CodeBase
+                    "UmbracoLinqPad.Gateway.dll"
                 });
         }
 
@@ -160,16 +145,6 @@ namespace UmbracoLinqPad
                 {
                     return found;
                 }
-
-                ////This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
-                //if (args.Name == "App_Code")
-                //{
-                //    var uri = new UriBuilder(assemblyToBuild.CodeBase);
-                //    var path = Uri.UnescapeDataString(uri.Path);
-                //    var dir = Path.GetDirectoryName(path);
-                //    return FakeAssembly(Path.Combine(dir, args.Name + ".dll")).CompiledAssembly;
-                //}
-
                 return null;
             };
 
@@ -177,7 +152,8 @@ namespace UmbracoLinqPad
 
             var gatewayLoader = new GatewayLoader(
                 LoadAssemblySafely(Path.Combine(GetDriverFolder(), "UmbracoLinqPad.Gateway.dll")),
-                loadedAssemblies.Single(x => x.GetName().Name == "Umbraco.Core"));
+                loadedAssemblies.Single(x => x.GetName().Name == "Umbraco.Core"),
+                LoadAssemblySafely(Path.Combine(GetDriverFolder(), "IQToolkit.dll")));
 
             using (var app = gatewayLoader.StartUmbracoApplication(new DirectoryInfo(cxInfo.AppConfigPath)))
             {
@@ -253,35 +229,14 @@ namespace UmbracoLinqPad
                 options.ReferencedAssemblies.Add(typeof(UmbracoDynamicDriver).Assembly.Location);
                 //add the UmbracoLinqPad.Gateway assembly reference
                 options.ReferencedAssemblies.Add(gatewayLoader.GatewayAssembly.Location);
+                //add the IQToolkit assembly reference
+                options.ReferencedAssemblies.Add(gatewayLoader.IqToolkitAssembly.Location);
 
                 results = codeProvider.CompileAssemblyFromSource(options, sb.ToString());
             }
             if (results.Errors.Count > 0)
                 throw new Exception
                     ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")" + "\r\n\r\n" + sb.ToString());
-
-            return results;
-        }
-
-        private CompilerResults FakeAssembly(string filePath)
-        {
-            // Use the CSharpCodeProvider to compile the generated code:
-            CompilerResults results;
-            using (var codeProvider = new CSharpCodeProvider(new Dictionary<string, string>() { { "CompilerVersion", "v4.0" } }))
-            {
-                var options = new CompilerParameters(
-                    "System.dll System.Core.dll System.Xml.dll".Split(),
-                    filePath,
-                    true)
-                {
-                    GenerateInMemory = true
-                };
-
-                results = codeProvider.CompileAssemblyFromSource(options, "");
-            }
-            if (results.Errors.Count > 0)
-                throw new Exception
-                    ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")");
 
             return results;
         }
