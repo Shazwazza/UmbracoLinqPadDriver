@@ -7,21 +7,22 @@ namespace UmbracoLinqPad
 {
     public abstract class UmbracoDataContextBase : IDisposable
     {
-        private readonly UmbracoApplicationProxy _umbracoApplication;
+        public DirectoryInfo UmbracoFolder { get; private set; }
+        //private readonly UmbracoApplicationProxy _umbracoApplication;
 
-        protected UmbracoDataContextBase(GatewayLoader gatewayLoader, DirectoryInfo umbracoFolder)
+        protected UmbracoDataContextBase(DirectoryInfo umbracoFolder)
         {
-
-            if (gatewayLoader == null) throw new ArgumentNullException("gatewayLoader");
+            UmbracoFolder = umbracoFolder;
+            //if (gatewayLoader == null) throw new ArgumentNullException("gatewayLoader");
             if (umbracoFolder == null) throw new ArgumentNullException("umbracoFolder");
 
-            _umbracoApplication = gatewayLoader.StartUmbracoApplication(umbracoFolder);
+            //_umbracoApplication = gatewayLoader.StartUmbracoApplication(umbracoFolder);
         }
 
-        public void Dispose()
-        {
-            _umbracoApplication.Dispose();
-        }
+        public abstract void Dispose();
+        //{
+        //    _umbracoApplication.Dispose();
+        //}
     }
 
 }

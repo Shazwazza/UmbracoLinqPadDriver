@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace UmbracoLinqPad.Compilers
 {
-    public interface IContentTypeCompiler
+    public interface IContentItemsCompiler
     {
-        string GenerateClass(string contentTypeAlias);
+        IEnumerable<string> GenerateClasses(IDisposable realUmbracoApplicationContext);
     }
 }

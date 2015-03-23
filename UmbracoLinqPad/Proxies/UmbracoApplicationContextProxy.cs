@@ -4,20 +4,17 @@ namespace UmbracoLinqPad.Proxies
 {
     internal class UmbracoApplicationContextProxy : IDisposable
     {
-        private readonly IDisposable _realUmbracoAppContext;
 
-        public UmbracoApplicationContextProxy(GatewayLoader gatewayLoader, IDisposable realUmbracoAppContext)
+        public UmbracoApplicationContextProxy(IDisposable realUmbracoAppContext)
         {
-            _realUmbracoAppContext = realUmbracoAppContext;
-
-            Services = new UmbracoServicesContextProxy(gatewayLoader, realUmbracoAppContext.GetPropertyValue("Services"));
+            RealUmbracoApplicationContext = realUmbracoAppContext;
         }
 
-        public UmbracoServicesContextProxy Services { get; private set; }
+        public IDisposable RealUmbracoApplicationContext { get; private set; }
 
         public void Dispose()
         {
-            _realUmbracoAppContext.Dispose();
+            RealUmbracoApplicationContext.Dispose();
         }
     }
 }

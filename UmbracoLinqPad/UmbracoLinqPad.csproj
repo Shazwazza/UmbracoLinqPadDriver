@@ -59,18 +59,16 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Compilers\IContentTypeCompiler.cs" />
+    <Compile Include="Compilers\IContentItemsCompiler.cs" />
     <Compile Include="Compilers\IDataContextCompiler.cs" />
     <Compile Include="ConnectionDialog.cs">
       <DependentUpon>ConnectionDialog.xaml</DependentUpon>
     </Compile>
     <Compile Include="GatewayLoader.cs" />
     <Compile Include="Models\IGeneratedContentBase.cs" />
-    <Compile Include="Queries\IContentTypeQuery.cs" />
     <Compile Include="ReflectionHelper.cs" />
     <Compile Include="Proxies\UmbracoApplicationContextProxy.cs" />
     <Compile Include="Proxies\UmbracoApplicationProxy.cs" />
-    <Compile Include="Proxies\UmbracoServicesContextProxy.cs" />
     <Compile Include="UmbracoDataContextBase.cs" />
     <Compile Include="UmbracoDynamicDriver.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

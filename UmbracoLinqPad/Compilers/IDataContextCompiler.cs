@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace UmbracoLinqPad.Compilers
 {
     public interface IDataContextCompiler
     {
-        string GenerateClass(string className, IEnumerable<string> contentTypeAliases);
+        string GenerateClass(string className, IDisposable realUmbracoApplicationContext);
     }
 }

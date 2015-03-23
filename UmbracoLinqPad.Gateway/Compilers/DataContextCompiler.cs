@@ -1,5 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using Umbraco.Core;
 using UmbracoLinqPad.Compilers;
 
 namespace UmbracoLinqPad.Gateway.Compilers
@@ -8,22 +11,25 @@ namespace UmbracoLinqPad.Gateway.Compilers
 
     public class DataContextCompiler : IDataContextCompiler
     {
-      
-        public string GenerateClass(string className, IEnumerable<string> contentTypeAliases)
+
+        public string GenerateClass(string className, IDisposable realUmbracoApplicationContext)
         {
+            var appContext = realUmbracoApplicationContext as ApplicationContext;
+            if (appContext == null) throw new ArgumentException("realUmbracoApplicationContext is not of type " + typeof(ApplicationContext));
+
             var sb = new StringBuilder();
 
             sb.Append("public class ");
             sb.Append(className);
-            sb.Append(" : UmbracoLinqPad.UmbracoDataContextBase"); //inherits
+            sb.Append(" : UmbracoLinqPad.Gateway.UmbracoDataContext"); //inherits
             sb.AppendLine(" {"); //open class
 
             //constructor
             sb.Append("public ");
             sb.Append(className);
-            sb.AppendLine("(GatewayLoader gatewayLoader, DirectoryInfo umbracoFolder) : base(gatewayLoader, umbracoFolder) { }");
+            sb.AppendLine("(DirectoryInfo umbracoFolder) : base(umbracoFolder) { }");
 
-            foreach (var alias in contentTypeAliases)
+            foreach (var alias in appContext.Services.ContentTypeService.GetAllContentTypes().Select(x => x.Alias))
             {
                 sb.Append("public IEnumerable<");
                 sb.Append(alias); //enumerable type

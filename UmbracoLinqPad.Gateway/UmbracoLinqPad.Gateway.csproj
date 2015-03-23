@@ -187,13 +187,12 @@
   <ItemGroup>
     <Compile Include="Bootstrap\ConsoleApplication.cs" />
     <Compile Include="Bootstrap\ConsoleBootManager.cs" />
-    <Compile Include="Class1.cs" />
-    <Compile Include="Compilers\ContentItemCompiler.cs" />
+    <Compile Include="Compilers\ContentItemsCompiler.cs" />
     <Compile Include="Compilers\DataContextCompiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\ContentCollection.cs" />
-    <Compile Include="Queries\ContentTypeQuery.cs" />
     <Compile Include="ReflectionHelper.cs" />
+    <Compile Include="UmbracoDataContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

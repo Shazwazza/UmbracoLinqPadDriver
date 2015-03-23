@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 
 namespace UmbracoLinqPad.Proxies
 {
@@ -7,14 +8,14 @@ namespace UmbracoLinqPad.Proxies
     {
         private readonly IDisposable _realUmbracoApp;
 
-        public UmbracoApplicationProxy(GatewayLoader gatewayLoader, IDisposable realUmbracoApp)
-        {            
+        public UmbracoApplicationProxy(IDisposable realUmbracoApp, Assembly umbracoCoreAssembly)
+        {
             _realUmbracoApp = realUmbracoApp;
             //start the app with reflection
             _realUmbracoApp.CallMethod("StartApplication", infos => infos.FirstOrDefault(x => x.IsPublic));
 
-            var realAppContext = (IDisposable)gatewayLoader.UmbracoCoreAssembly.GetType("Umbraco.Core.ApplicationContext").GetStaticProperty("Current");
-            ApplicationContext = new UmbracoApplicationContextProxy(gatewayLoader, realAppContext);
+            var realAppContext = (IDisposable)umbracoCoreAssembly.GetType("Umbraco.Core.ApplicationContext").GetStaticProperty("Current");
+            ApplicationContext = new UmbracoApplicationContextProxy(realAppContext);
         }
 
         public UmbracoApplicationContextProxy ApplicationContext { get; private set; }
