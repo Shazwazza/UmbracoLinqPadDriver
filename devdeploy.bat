@@ -1,5 +1,10 @@
 set slnPath=%1
 echo slnPath = %slnPath%
 
-xcopy /i/y %slnPath%\UmbracoLinqPad\bin\Debug\UmbracoLinqPad.* "%programdata%\LINQPad\Drivers\DataContext\4.0\UmbracoLinqPad (977d3d694b4b0d0b)\"
-xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\UmbracoLinqPad.* "%programdata%\LINQPad\Drivers\DataContext\4.0\UmbracoLinqPad (977d3d694b4b0d0b)\"
+rmdir /S /Q "%slnPath%\_Build\"
+xcopy /i/y %slnPath%\UmbracoLinqPad\bin\Debug\UmbracoLinqPad.* "%slnPath%\_Build\"
+xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\UmbracoLinqPad.* "%slnPath%\_Build\"
+
+"C:\Program Files\7-Zip\7z.exe" a -tzip "%slnPath%\_Build\UmbracoLinqPad.lpx" -w "%slnPath%\_Build\"
+
+xcopy /i/y %slnPath%\_Build\*.* "%programdata%\LINQPad\Drivers\DataContext\4.0\UmbracoLinqPad (977d3d694b4b0d0b)\"

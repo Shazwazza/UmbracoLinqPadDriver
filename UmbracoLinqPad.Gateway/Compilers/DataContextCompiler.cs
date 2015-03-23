@@ -37,7 +37,7 @@ namespace UmbracoLinqPad.Gateway.Compilers
                 sb.AppendLine(alias); //property name
                 sb.AppendLine(" { "); //start property
                 sb.Append(" get { "); //start get
-                sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentCollection<");
+                sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentQuery<");
                 sb.Append(alias);
                 sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
                 sb.Append(alias);
