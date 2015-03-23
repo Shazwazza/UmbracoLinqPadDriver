@@ -10,6 +10,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AAAC48C0-6892-437B-866C-1DBB813D78D5}"
 	ProjectSection(SolutionItems) = preProject
 		devdeploy.bat = devdeploy.bat
+		header.xml = header.xml
 	EndProjectSection
 EndProject
 Global

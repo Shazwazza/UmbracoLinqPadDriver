@@ -64,7 +64,25 @@ namespace UmbracoLinqPad
 
         public override IEnumerable<string> GetAssembliesToAdd(IConnectionInfo cxInfo)
         {
-            return new[] { "UmbracoLinqPad.Gateway.dll" };
+            ////we'll need to manually resolve any assemblies loaded above
+            //AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            //{
+            //    //This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
+            //    if (args.Name != "App_Code") return null;
+            //    return FakeAssembly(Path.Combine(GetDriverFolder(), args.Name + ".dll")).CompiledAssembly;
+            //};
+
+            ////This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
+            //var appCode = FakeAssembly(Path.Combine(GetDriverFolder(), "App_Code.dll")).CompiledAssembly;
+
+            var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
+
+            return Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll")
+                .Concat(new[]
+                {
+                    "UmbracoLinqPad.Gateway.dll",
+                    //appCode.CodeBase
+                });
         }
 
         public override void OnQueryFinishing(IConnectionInfo cxInfo, object context, QueryExecutionManager executionManager)
@@ -129,11 +147,37 @@ namespace UmbracoLinqPad
             nameSpace = "Umbraco.Generated";
             typeName = "GeneratedUmbracoDataContext";
 
+            var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
+
+            //load all assemblies in the umbraco bin folder
+            var loadedAssemblies = Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll").Select(LoadAssemblySafely).ToList();
+            
+            //we'll need to manually resolve any assemblies loaded above
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                var found = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == new AssemblyName(args.Name).Name);
+                if (found != null)
+                {
+                    return found;
+                }
+
+                ////This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
+                //if (args.Name == "App_Code")
+                //{
+                //    var uri = new UriBuilder(assemblyToBuild.CodeBase);
+                //    var path = Uri.UnescapeDataString(uri.Path);
+                //    var dir = Path.GetDirectoryName(path);
+                //    return FakeAssembly(Path.Combine(dir, args.Name + ".dll")).CompiledAssembly;
+                //}
+
+                return null;
+            };
+
             //Create a loader to startup the umbraco app to create the schema and the generated DataContext class
 
             var gatewayLoader = new GatewayLoader(
                 LoadAssemblySafely(Path.Combine(GetDriverFolder(), "UmbracoLinqPad.Gateway.dll")),
-                LoadAssemblySafely(Path.Combine(GetDriverFolder(), "Umbraco.Core.dll")));
+                loadedAssemblies.Single(x => x.GetName().Name == "Umbraco.Core"));
 
             using (var app = gatewayLoader.StartUmbracoApplication(new DirectoryInfo(cxInfo.AppConfigPath)))
             {
@@ -215,6 +259,29 @@ namespace UmbracoLinqPad
             if (results.Errors.Count > 0)
                 throw new Exception
                     ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")" + "\r\n\r\n" + sb.ToString());
+
+            return results;
+        }
+
+        private CompilerResults FakeAssembly(string filePath)
+        {
+            // Use the CSharpCodeProvider to compile the generated code:
+            CompilerResults results;
+            using (var codeProvider = new CSharpCodeProvider(new Dictionary<string, string>() { { "CompilerVersion", "v4.0" } }))
+            {
+                var options = new CompilerParameters(
+                    "System.dll System.Core.dll System.Xml.dll".Split(),
+                    filePath,
+                    true)
+                {
+                    GenerateInMemory = true
+                };
+
+                results = codeProvider.CompileAssemblyFromSource(options, "");
+            }
+            if (results.Errors.Count > 0)
+                throw new Exception
+                    ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")");
 
             return results;
         }
