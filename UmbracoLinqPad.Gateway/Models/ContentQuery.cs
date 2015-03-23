@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using LinqToAnything;
 using Umbraco.Core.Models;
+using Umbraco.Core.Persistence.DatabaseModelDefinitions;
 using UmbracoLinqPad.Models;
 
 namespace UmbracoLinqPad.Gateway.Models
@@ -20,9 +22,7 @@ namespace UmbracoLinqPad.Gateway.Models
         private readonly IOrderedQueryable<T> _baseQueryable;
 
         public ContentQuery(UmbracoDataContext dataContext, string contentTypeAlias)
-        {
-            System.Diagnostics.Debugger.Launch();
-
+        {            
             if (dataContext == null) throw new ArgumentNullException("dataContext");
 
             //NOTE: This is strange i know but linqpad subclasses our data context in it's own assembly, we need
@@ -41,40 +41,34 @@ namespace UmbracoLinqPad.Gateway.Models
         {
             System.Diagnostics.Debugger.Launch();
 
-            _dataContext.ExecutedCommand("QueryInfo: " +
-                "OrderBy: " +
-                info.OrderBy +
-                ", Take: " + (info.Take.HasValue ? info.Take.Value.ToString() : "null") +
-                ", Skip: " + info.Skip +
-                string.Join("\r\n", info.Clauses));
+            var sb = new StringBuilder();
+            sb.AppendLine("ApplicationContext.Services.ContentService.GetPagedDescendants(")
+                .AppendLine("     -1,")
+                .AppendFormat("     {0}, //skip", info.Skip).AppendLine()
+                .AppendFormat("     {0}, //take", info.Take ?? int.MaxValue).AppendLine()
+                .AppendLine("     out total,")
+                .AppendFormat("     {0}, //order by", info.OrderBy == null ? "Path" : info.OrderBy.Name).AppendLine()
+                .AppendFormat("     {0}, //direction", info.OrderBy == null ? "Direction.Ascending" : info.OrderBy.Direction == OrderBy.OrderByDirection.Asc ? "Direction.Ascending" : "Direction.Descending").AppendLine();
+            _dataContext.ExecutedCommand(sb.ToString());
 
-            var content = _dataContext.ApplicationContext.Services.ContentService.GetContentOfContentType(_contentType.Id);
+            int total;
+
+            var content = _dataContext.ApplicationContext.Services.ContentService.GetPagedDescendants(
+                -1,
+                info.Skip,
+                info.Take ?? int.MaxValue,
+                out total,
+                info.OrderBy == null ? "Path" : info.OrderBy.Name,
+                info.OrderBy == null ? Direction.Ascending : info.OrderBy.Direction == OrderBy.OrderByDirection.Asc ? Direction.Ascending : Direction.Descending);
+
+            //var content = _dataContext.ApplicationContext.Services.ContentService.GetContentOfContentType(_contentType.Id);
 
             //convert to the generated type (needs to be from the generated assembly)
             var genType = _generatedAssembly.GetType("Umbraco.Generated." + _contentTypeAlias);
             if (genType == null)
                 throw new InvalidOperationException("No generated type found: " + "Umbraco.Generated." + _contentTypeAlias +
                                                     " data context assembly: " + _generatedAssembly);
-            return content.Select(x => FromIContent(genType, x));
-        }
-
-        private T FromIContent(Type genType, IContent content)
-        {
-            var instance = (T)Activator.CreateInstance(genType);
-            instance.ContentTypeAlias = content.ContentType.Alias;
-            instance.Name = content.Name;
-
-            var contentTypeProps = genType.GetProperties().Where(x => x.Name != "ContentTypeAlias" && x.Name != "Name");
-            foreach (var contentTypeProp in contentTypeProps)
-            {
-                if (content.Properties.Contains(contentTypeProp.Name))
-                {
-                    var prop = content.Properties[contentTypeProp.Name];
-                    contentTypeProp.SetValue(instance, prop.Value, null);
-                }
-            }
-
-            return instance;
+            return content.Select(x => ModelMapper.FromIContent<T>(genType, x));
         }
 
         public IEnumerator<T> GetEnumerator()

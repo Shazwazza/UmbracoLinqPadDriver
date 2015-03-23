@@ -31,19 +31,35 @@ namespace UmbracoLinqPad.Gateway.Compilers
 
             foreach (var alias in appContext.Services.ContentTypeService.GetAllContentTypes().Select(x => x.Alias))
             {
-                sb.Append("public IQueryable<");
+                sb.Append("public IEnumerable<");
                 sb.Append(alias); //enumerable type
                 sb.Append("> ");
                 sb.AppendLine(alias); //property name
                 sb.AppendLine(" { "); //start property
                 sb.Append(" get { "); //start get
-                sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentQuery<");
+                sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentCollection<");
                 sb.Append(alias);
                 sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
                 sb.Append(alias);
                 sb.Append("\"); ");
                 sb.AppendLine("}"); //end get
                 sb.AppendLine("}"); //end property
+
+                //TODO: When we have the ability to query content nicely from the core and implement IQueryable, then we'd enable that here
+
+                //sb.Append("public IQueryable<");
+                //sb.Append(alias); //enumerable type
+                //sb.Append("> ");
+                //sb.AppendLine(alias); //property name
+                //sb.AppendLine(" { "); //start property
+                //sb.Append(" get { "); //start get
+                //sb.Append(" return new UmbracoLinqPad.Gateway.Models.ContentQuery<");
+                //sb.Append(alias);
+                //sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
+                //sb.Append(alias);
+                //sb.Append("\"); ");
+                //sb.AppendLine("}"); //end get
+                //sb.AppendLine("}"); //end property
             }
 
             sb.AppendLine("}"); //end class

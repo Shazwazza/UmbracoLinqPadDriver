@@ -5,7 +5,7 @@ rmdir /S /Q "%slnPath%\_Build\"
 
 xcopy /i/y header.xml "%slnPath%\_Build\"
 xcopy /i/y %slnPath%\UmbracoLinqPad\bin\Debug\UmbracoLinqPad.* "%slnPath%\_Build\"
-xcopy /i/y %slnPath%\IQToolkit\bin\Debug\*.* "%slnPath%\_Build\"
+REM xcopy /i/y %slnPath%\IQToolkit\bin\Debug\*.* "%slnPath%\_Build\"
 xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\UmbracoLinqPad.* "%slnPath%\_Build\"
 xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\LinqToAnything.* "%slnPath%\_Build\"
 xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\System.Linq.Dynamic.* "%slnPath%\_Build\"
