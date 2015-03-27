@@ -14,7 +14,7 @@ Before you proceed to start using this, here's some important things to know:
 
 ## Installation
 
-* Download the driver
+* Download the driver from https://github.com/Shazwazza/UmbracoLinqPadDriver/releases/tag/v1.0.0
 * In LinqPad, Click "Add Connection"
 * Click "View more drivers"
 * Select "Browse"
