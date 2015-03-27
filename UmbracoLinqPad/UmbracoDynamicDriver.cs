@@ -231,6 +231,8 @@ namespace UmbracoLinqPad
                 options.ReferencedAssemblies.Add(gatewayLoader.GatewayAssembly.Location);
                 //add the IQToolkit assembly reference
                 options.ReferencedAssemblies.Add(gatewayLoader.IqToolkitAssembly.Location);
+                //add the Umbraco.Core assembly reference
+                options.ReferencedAssemblies.Add(gatewayLoader.UmbracoCoreAssembly.Location);
 
                 results = codeProvider.CompileAssemblyFromSource(options, sb.ToString());
             }

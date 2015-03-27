@@ -199,6 +199,7 @@
     <Compile Include="Compilers\ContentItemsCompiler.cs" />
     <Compile Include="Compilers\DataContextCompiler.cs" />
     <Compile Include="Models\ContentCollection.cs" />
+    <Compile Include="Models\ContentCollectionBase.cs" />
     <Compile Include="Models\ContentQuery.cs" />
     <Compile Include="Models\MediaCollection.cs" />
     <Compile Include="Models\ModelMapper.cs" />

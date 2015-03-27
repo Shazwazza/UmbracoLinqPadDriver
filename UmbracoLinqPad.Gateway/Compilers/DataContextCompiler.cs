@@ -43,14 +43,18 @@ namespace UmbracoLinqPad.Gateway.Compilers
 
         private void GenerateProperty(string alias, string category, string collectionType, StringBuilder sb)
         {
+            //the type is the content type alias prefixed with the category, i.e. Content_BlogPost
+            // the property name will also be the same
+            var type = string.Format("{0}_{1}", category, alias); 
+
             sb.Append("public IEnumerable<");
-            sb.Append(alias); //enumerable type
+            sb.Append(type); //Ienumerable type 
             sb.Append("> ");
-            sb.AppendFormat("{0}_{1}", category, alias); //property name prefixed with category (i.e. Content)
+            sb.AppendFormat(type); //property name
             sb.AppendLine(" { "); //start property
             sb.Append(" get { "); //start get
-            sb.AppendFormat(" return new {0}<", collectionType);
-            sb.Append(alias);
+            sb.AppendFormat(" return new {0}<", collectionType); //ctor for the collection type i.e. UmbracoLinqPad.Gateway.Models.ContentCollection<T>
+            sb.Append(type);
             sb.Append(">(this,\""); //pass ourselves (datacontext) into the collection
             sb.Append(alias);
             sb.Append("\"); ");
