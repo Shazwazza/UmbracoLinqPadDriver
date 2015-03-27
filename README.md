@@ -37,6 +37,10 @@ And it will show you the root content
 
 Since LinqPad supports c# statements, etc.. you could write full scripts and even persist things back to your database
 
-#Known issues and limitations
+## Known issues and limitations
 
 Probably a lot :)
+
+## See it in action
+
+https://www.youtube.com/watch?feature=player_embedded&v=ypPvOQY8sF0
