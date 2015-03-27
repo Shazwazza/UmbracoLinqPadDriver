@@ -36,3 +36,7 @@ The Umbraco LinqPad Driver's data context exposes the Umbraco ApplicationContext
 And it will show you the root content
 
 Since LinqPad supports c# statements, etc.. you could write full scripts and even persist things back to your database
+
+#Known issues and limitations
+
+Probably a lot :)
