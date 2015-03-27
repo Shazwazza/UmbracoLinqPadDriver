@@ -66,7 +66,9 @@ namespace UmbracoLinqPad
             return Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll")
                 .Concat(new[]
                 {
-                    "UmbracoLinqPad.Gateway.dll"
+                    "UmbracoLinqPad.Gateway.dll",
+                    //include the empty (silly) App_Code
+                    GetAssemblyPath(ResolveAppCode())
                 });
         }
 
@@ -139,13 +141,16 @@ namespace UmbracoLinqPad
 
             //we'll need to manually resolve any assemblies loaded above
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
-            {
-                var found = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == new AssemblyName(args.Name).Name);
-                if (found != null)
+            {   
+                //This is stupid but is required becaue the TypeFinder is looking for an App_Code assembly, so we'll generate an empty one
+                if (args.Name == "App_Code")
                 {
-                    return found;
+                    return ResolveAppCode();
                 }
-                return null;
+
+                var found = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == new AssemblyName(args.Name).Name);
+
+                return found;
             };
 
             //Create a loader to startup the umbraco app to create the schema and the generated DataContext class
@@ -241,6 +246,41 @@ namespace UmbracoLinqPad
                     ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")" + "\r\n\r\n" + sb.ToString());
 
             return results;
+        }
+        
+        private CompilerResults FakeAssembly(string filePath)
+        {
+            // Use the CSharpCodeProvider to compile the generated code:
+            CompilerResults results;
+            using (var codeProvider = new CSharpCodeProvider(new Dictionary<string, string>() { { "CompilerVersion", "v4.0" } }))
+            {
+                var options = new CompilerParameters(
+                    "System.dll System.Core.dll System.Xml.dll".Split(),
+                    filePath,
+                    true)
+                {
+                    GenerateInMemory = true
+                };
+
+                results = codeProvider.CompileAssemblyFromSource(options, "");
+            }
+            if (results.Errors.Count > 0)
+                throw new Exception
+                    ("Cannot compile typed context: " + results.Errors[0].ErrorText + " (line " + results.Errors[0].Line + ")");
+
+            return results;
+        }
+
+        private Assembly ResolveAppCode()
+        {
+            return FakeAssembly(Path.Combine(GetDriverFolder(), "App_Code" + ".dll")).CompiledAssembly;
+        }
+
+        private string GetAssemblyPath(Assembly ass)
+        {
+            var uri = new UriBuilder(ass.CodeBase);
+            var path = Uri.UnescapeDataString(uri.Path);
+            return Path.GetDirectoryName(path);
         }
 
     }
