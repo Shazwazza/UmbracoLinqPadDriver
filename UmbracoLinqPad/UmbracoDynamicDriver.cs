@@ -137,7 +137,19 @@ namespace UmbracoLinqPad
             var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
 
             //load all assemblies in the umbraco bin folder
-            var loadedAssemblies = Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll").Select(LoadAssemblySafely).ToList();
+            //var loadedAssemblies = Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll").Select(LoadAssemblySafely).ToList();
+            var loadedAssembliesWithBFE = Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll");
+            List<Assembly> loadedAssemblies = new List<Assembly>();
+
+            foreach (var s in loadedAssembliesWithBFE)
+            {
+                try
+                {
+                    loadedAssemblies.Add(LoadAssemblySafely(s));
+                }
+                catch (BadImageFormatException e)
+                { }
+            }
 
             //we'll need to manually resolve any assemblies loaded above
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
@@ -148,9 +160,9 @@ namespace UmbracoLinqPad
                     return ResolveAppCode();
                 }
 
-                var found = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == new AssemblyName(args.Name).Name);
+                    var found = loadedAssemblies.FirstOrDefault(x => x.GetName().Name == new AssemblyName(args.Name).Name);
 
-                return found;
+                    return found;
             };
 
             //Create a loader to startup the umbraco app to create the schema and the generated DataContext class
