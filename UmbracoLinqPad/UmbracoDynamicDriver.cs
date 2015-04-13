@@ -63,8 +63,20 @@ namespace UmbracoLinqPad
         {
             var umbFolder = new DirectoryInfo(cxInfo.AppConfigPath);
 
-            return Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll")
-                .Concat(new[]
+            List<string> assembliesToAdd = new List<string>();
+
+            foreach (var dll in  Directory.GetFiles(Path.Combine(umbFolder.FullName, "bin"), "*.dll"))
+            {
+                try
+                {
+                    Assembly assembly = LoadAssemblySafely(dll);
+                    assembliesToAdd.Add(dll);
+                }
+                catch (BadImageFormatException e)
+                { }
+            }
+            return
+                assembliesToAdd.Concat(new[]
                 {
                     "UmbracoLinqPad.Gateway.dll",
                     //include the empty (silly) App_Code
