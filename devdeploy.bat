@@ -13,4 +13,4 @@ xcopy /i/y %slnPath%\UmbracoLinqPad.Gateway\bin\Debug\QueryInterceptor.* "%slnPa
 
 "C:\Program Files\7-Zip\7z.exe" a -tzip "%slnPath%\_Build\UmbracoLinqPad.lpx" "%slnPath%\_Build\UmbracoLinqPad*.dll" "%slnPath%\_Build\QueryInterceptor*.dll" "%slnPath%\_Build\LinqToAnything*.dll" "%slnPath%\_Build\IQToolkit*.dll" "%slnPath%\_Build\*.xml" "%slnPath%\_Build\*.pdb"
 
-xcopy /i/y %slnPath%\_Build\*.* "%programdata%\LINQPad\Drivers\DataContext\4.0\UmbracoLinqPad (977d3d694b4b0d0b)\"
+xcopy /i/y %slnPath%\_Build\*.* "%localappdata%\LINQPad\Drivers\DataContext\4.6\UmbracoLinqPad (no-strong-name)"

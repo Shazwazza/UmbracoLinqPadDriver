@@ -73,6 +73,29 @@ namespace UmbracoLinqPad.Gateway
             return methodInfo;
         }
 
+        private static FieldInfo GetFieldInfo(Type type, string fieldName, Func<IEnumerable<FieldInfo>, FieldInfo> filter = null)
+        {
+            FieldInfo fieldInfo = null;
+            do
+            {
+                try
+                {
+                    fieldInfo = type.GetField(fieldName,
+                        BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                }
+                catch (AmbiguousMatchException)
+                {
+                    if (filter == null) throw;
+
+                    fieldInfo = filter(type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
+                        .Where(x => x.Name == fieldName));
+                }
+                type = type.BaseType;
+            }
+            while (fieldInfo == null && type != null);
+            return fieldInfo;
+        }
+
         private static PropertyInfo GetPropertyInfo(Type type, string propertyName, Func<IEnumerable<PropertyInfo>, PropertyInfo> filter = null)
         {
             PropertyInfo propInfo = null;
@@ -108,6 +131,18 @@ namespace UmbracoLinqPad.Gateway
             return propInfo.GetValue(obj, null);
         }
 
+        public static object GetFieldValue(this object obj, string fieldName)
+        {
+            if (obj == null)
+                throw new ArgumentNullException("obj");
+            Type objType = obj.GetType();
+            FieldInfo propInfo = GetFieldInfo(objType, fieldName);
+            if (propInfo == null)
+                throw new ArgumentOutOfRangeException("fieldName",
+                    string.Format("Couldn't find field {0} in type {1}", fieldName, objType.FullName));
+            return propInfo.GetValue(obj);
+        }
+
         public static void SetPropertyValue(this object obj, string propertyName, object val)
         {
             if (obj == null)
@@ -118,6 +153,16 @@ namespace UmbracoLinqPad.Gateway
                 throw new ArgumentOutOfRangeException("propertyName",
                     string.Format("Couldn't find property {0} in type {1}", propertyName, objType.FullName));
             propInfo.SetValue(obj, val, null);
+        }
+
+        public static void SetStaticFieldValue(this Type objType, string fieldName, object val)
+        {
+            if (objType == null) throw new ArgumentNullException(nameof(objType));
+            FieldInfo fieldInfo = GetFieldInfo(objType, fieldName);
+            if (fieldInfo == null)
+                throw new ArgumentOutOfRangeException("fieldName",
+                    string.Format("Couldn't find field {0} in type {1}", fieldName, objType.FullName));
+            fieldInfo.SetValue(null, val);
         }
     }
 }

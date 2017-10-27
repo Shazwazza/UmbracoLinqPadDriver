@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("UmbracoLinqPad.Gateway")]
-[assembly: AssemblyDescription("Umbraco LinqPad Driver Gateway assembly (unsigned)")]
+[assembly: AssemblyDescription("Umbraco LinqPad Driver Gateway assembly")]
 [assembly: AssemblyConfiguration("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 

@@ -5,11 +5,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Web.Caching;
+using umbraco.interfaces;
 using Umbraco.Core;
 using Umbraco.Core.Cache;
 using Umbraco.Core.Configuration;
 using Umbraco.Core.Configuration.UmbracoSettings;
 using Umbraco.Core.IO;
+using Umbraco.Core.ObjectResolution;
+using Umbraco.Core.Scoping;
 using Umbraco.Core.Services;
 
 namespace UmbracoLinqPad.Gateway.Bootstrap
@@ -17,6 +20,7 @@ namespace UmbracoLinqPad.Gateway.Bootstrap
     public class ConsoleBootManager : CoreBootManager
     {
         private readonly DirectoryInfo _umbracoFolder;
+        private Configuration _config;
 
         public ConsoleBootManager(UmbracoApplicationBase umbracoApplication, DirectoryInfo umbracoFolder)
             : base(umbracoApplication)
@@ -36,28 +40,33 @@ namespace UmbracoLinqPad.Gateway.Bootstrap
             {
                 ExeConfigFilename = configFile.FullName
             };
-            var config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
-            
-            ConfigureUmbracoSettings(config);
-            ConfigureConnectionStrings(config);
-            ConfigureAppSettings(config);
+            _config = ConfigurationManager.OpenMappedExeConfiguration(configMap, ConfigurationUserLevel.None);
 
+            ConfigureUmbracoSettings(_config);            
+            ConfigureConnectionStrings(_config);
+            ConfigureAppSettings(_config);
+            
             //Few folders that need to exist
             System.IO.Directory.CreateDirectory(IOHelper.MapPath("~/App_Plugins"));
 
             return base.Initialize();
         }
 
+        public override IBootManager Startup(Action<ApplicationContext> afterStartup)
+        {
+            //This is a special case and is due to a timing issue, we need to wait until the appCtx singleton is created
+            //and then we can forcefully configure the file system providers since unfortunatley some of those rely on the singleton
+            ConfigureFileSystemProviders(_config);
+
+            return base.Startup(afterStartup);
+        }
+
         /// <summary>
         /// Disables all application level cache
         /// </summary>
-        protected override void CreateApplicationCache()
+        protected override CacheHelper CreateApplicationCache()
         {
-            var cacheHelper = new CacheHelper(
-                        new NullCacheProvider(),
-                        new NullCacheProvider(),
-                        new NullCacheProvider());
-            ApplicationCache = cacheHelper;
+            return CacheHelper.CreateDisabledCacheHelper();
         }
 
         /// <summary>
@@ -68,12 +77,14 @@ namespace UmbracoLinqPad.Gateway.Bootstrap
         protected override void InitializeApplicationEventsResolver()
         {
             base.InitializeApplicationEventsResolver();
+            
+            var appEventsResolver = ApplicationEventsResolver.Current;
+            //get the legacy resolver, unfortunately this needs reflection currently - this is because the core's RemoveType functionality
+            //doesn't also filter the legacy ones which it needs to do (will be done soon)            
+            var legacyAppEventsResolver = (ManyObjectsResolverBase<ApplicationEventsResolver, IApplicationStartupHandler>)appEventsResolver.GetFieldValue("_legacyResolver");
 
-            //now remove what we want to , unfortunately this needs reflection currently
-            var appEventsResolverType = Type.GetType("Umbraco.Core.ObjectResolution.ApplicationEventsResolver,Umbraco.Core", true);
-            var appEventsResolver = appEventsResolverType.GetStaticProperty("Current");
-            //now we want to get all IApplicationStartupHandlers from the PluginManager, again, needs reflection
-            var startupHandlers = (IEnumerable<Type>)PluginManager.Current.CallMethod("ResolveApplicationStartupHandlers");
+            //now we want to get all IApplicationStartupHandlers from the PluginManager
+            var startupHandlers = PluginManager.Current.ResolveTypes<IApplicationStartupHandler>();
             //for now we're just going to remove any type that does not exist in Umbraco.Core
             foreach (var startupHandler in startupHandlers
                 .Where(x => x.Namespace != null)
@@ -81,11 +92,15 @@ namespace UmbracoLinqPad.Gateway.Bootstrap
             {
                 //This is a special case because we have legacy handlers that are not of type IApplicationEventHandler and only 
                 // of type IUmbracoStartupHandler which will throw if we try to remove them here because those are handled on
-                // an internal object inside of ApplicationEventsResolver. It's our hope that none of those handlers will interfere with
-                // the core processing outside of the web... but we'll have to deal with that later since I'm sure there will be problems.
+                // an internal object inside of ApplicationEventsResolver. 
                 if (typeof (IApplicationEventHandler).IsAssignableFrom(startupHandler))
                 {
-                    appEventsResolver.CallMethod("RemoveType", infos => infos.FirstOrDefault(x => x.IsGenericMethod == false), startupHandler);    
+                    appEventsResolver.RemoveType(startupHandler);
+                }
+                else if (typeof(IApplicationStartupHandler).IsAssignableFrom(startupHandler))
+                {
+                    //remove all legacy handlers
+                    legacyAppEventsResolver.RemoveType(startupHandler);
                 }
             }
         }
@@ -119,72 +134,13 @@ namespace UmbracoLinqPad.Gateway.Bootstrap
         private void ConfigureUmbracoSettings(Configuration config)
         {
             var umbSettings = (IUmbracoSettingsSection)config.GetSection("umbracoConfiguration/settings");
-            //use reflection to set the settings
-            UmbracoConfig.For.CallMethod("SetUmbracoSettings", umbSettings);
-        }
-    }
-
-    public class NullCacheProvider : IRuntimeCacheProvider
-    {
-        public virtual void ClearAllCache()
-        {
+            UmbracoConfig.For.SetUmbracoSettings(umbSettings);
         }
 
-        public virtual void ClearCacheItem(string key)
+        private void ConfigureFileSystemProviders(Configuration config)
         {
-        }
-
-        public virtual void ClearCacheObjectTypes(string typeName)
-        {
-        }
-
-        public virtual void ClearCacheObjectTypes<T>()
-        {
-        }
-
-        public virtual void ClearCacheObjectTypes<T>(Func<string, T, bool> predicate)
-        {
-        }
-
-
-
-
-        public virtual void ClearCacheByKeySearch(string keyStartsWith)
-        {
-        }
-
-        public virtual void ClearCacheByKeyExpression(string regexString)
-        {
-        }
-
-        public virtual IEnumerable<object> GetCacheItemsByKeySearch(string keyStartsWith)
-        {
-            return Enumerable.Empty<object>();
-        }
-
-        public IEnumerable<object> GetCacheItemsByKeyExpression(string regexString)
-        {
-            return Enumerable.Empty<object>();
-        }
-
-        public virtual object GetCacheItem(string cacheKey)
-        {
-            return default(object);
-        }
-
-        public virtual object GetCacheItem(string cacheKey, Func<object> getCacheItem)
-        {
-            return getCacheItem();
-        }
-
-        public object GetCacheItem(string cacheKey, Func<object> getCacheItem, TimeSpan? timeout, bool isSliding = false, CacheItemPriority priority = CacheItemPriority.Normal, CacheItemRemovedCallback removedCallback = null, string[] dependentFiles = null)
-        {
-            return getCacheItem();
-        }
-
-        public void InsertCacheItem(string cacheKey, Func<object> getCacheItem, TimeSpan? timeout = null, bool isSliding = false, CacheItemPriority priority = CacheItemPriority.Normal, CacheItemRemovedCallback removedCallback = null, string[] dependentFiles = null)
-        {
-
+            var fileSystems = (FileSystemProvidersSection)config.GetSection("umbracoConfiguration/FileSystemProviders");
+            FileSystemProviderManager.SetCurrent(new FileSystemProviderManager(fileSystems));            
         }
     }
 }

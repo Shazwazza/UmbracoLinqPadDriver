@@ -155,10 +155,12 @@ namespace UmbracoLinqPad
 
             //Create a loader to startup the umbraco app to create the schema and the generated DataContext class
 
+            var driverFolder = GetDriverFolder();
+
             var gatewayLoader = new GatewayLoader(
-                LoadAssemblySafely(Path.Combine(GetDriverFolder(), "UmbracoLinqPad.Gateway.dll")),
+                LoadAssemblySafely(Path.Combine(driverFolder, "UmbracoLinqPad.Gateway.dll")),
                 loadedAssemblies.Single(x => x.GetName().Name == "Umbraco.Core"),
-                LoadAssemblySafely(Path.Combine(GetDriverFolder(), "IQToolkit.dll")));
+                LoadAssemblySafely(Path.Combine(driverFolder, "IQToolkit.dll")));
 
             using (var app = gatewayLoader.StartUmbracoApplication(new DirectoryInfo(cxInfo.AppConfigPath)))
             {
