@@ -6,8 +6,8 @@ favorite Umbraco Service APIs.
 
 __What a demo?__ https://www.youtube.com/watch?feature=player_embedded&v=ypPvOQY8sF0
 
-_v2.0.0 supports Umbraco 7.7+_
-_v1.0.0 supports 7.2+ and < 7.5_
+* _v2.0.0 supports Umbraco 7.7+_
+* _v1.0.0 supports 7.2+ and < 7.5_
 
 ## Installation
 
