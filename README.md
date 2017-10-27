@@ -24,7 +24,7 @@ __What a demo?__ https://www.youtube.com/watch?feature=player_embedded&v=ypPvOQY
 * Right click and choose a query (i.e.Take 100)
 * The query will display on the right, you can modify it and execute it
 
-## Advanced Usage
+## Scripting
 
 The Umbraco LinqPad Driver's data context exposes the Umbraco ApplicationContext as 'ApplicationContext' 
 so you can write whatever queries you want against the Umbraco services or DatabaseContext, etc... for example you could just write:
