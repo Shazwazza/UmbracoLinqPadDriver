@@ -1,3 +1,6 @@
+---
+_❤️ If you use and like the LinqPad driver for Umbraco please consider [becoming a GitHub Sponsor](https://github.com/sponsors/Shazwazza/) ❤️_
+
 # A LinqPad driver for Umbraco
 
 This allows you to easily query data in an Umbraco installation. All you need to do is add a LinqPad connection and point it to your Umbraco folder! 
